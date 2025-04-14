@@ -6,7 +6,6 @@ import { UserController } from "../controllers/userController.js";
 const userRouter = Router();
 const userContainer = container.get<UserController>(TYPES.UserController);
 
-userRouter.get('/:email', userContainer.findByEmail.bind(userContainer));
-userRouter.post('/', userContainer.create.bind(userContainer));
-
+userRouter.post('/signup', userContainer.create.bind(userContainer));
+userRouter.post('/signin', userContainer.findByEmail.bind(userContainer));
 export default userRouter;

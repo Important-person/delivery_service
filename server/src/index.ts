@@ -1,10 +1,20 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/userRoutes.js';
+import session from 'express-session';
+import passport from 'passport';
 
 const app = express();
 app.use(express.json());
-app.use('/users', userRouter);
+app.use(session({
+    secret: 'Bus on road',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/api', userRouter);
 
 async function startServer(URLDB: string, PORT: string): Promise<void> {
     try {

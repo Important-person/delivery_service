@@ -1,9 +1,10 @@
 import "reflect-metadata";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { IUserService} from "../services/userService.js";
 import TYPES from "../types/types.js";
 import { inject, injectable } from "inversify";
 import { IUser } from "../types/user.js";
+import passport from "passport";
 
 @injectable()
 export class UserController {
@@ -26,7 +27,7 @@ export class UserController {
                 res.status(200).json(user);
             }
         } catch(err) {
-            console.error(`Error UserController.findByEmail for email ${email}`);
+            console.error(`Error UserController.findByEmail for email ${err}`);
             res.status(500).json({ message: "Internal server error" })
         }
     }
@@ -47,5 +48,19 @@ export class UserController {
             console.error(`Error UserController.create userData `, err);
             res.status(500).json({ message: "Internal server error" })
         }
+    }
+
+    login(req: Request, res: Response, next: NextFunction): void {
+        passport.authenticate('local', (err: unknown, user: Express.User, info: unknown) => {
+
+            if(err) return next(err);
+
+            if(!user) return res.status(404).json({ error: 'Неверный логин или пароль', status: 'error' });
+
+            req.login(user, (err) => {
+                if(err) return next(err);
+                return res.json({ data: user, status: 'ok' });
+            })
+        })(req, res, next);
     }
 }
