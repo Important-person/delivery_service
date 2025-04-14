@@ -4,10 +4,10 @@ import { IUserDocument } from "../types/user.js";
 
 const SALT_LENGTH = 10;
 
-const UserSchame = new Schema<IUserDocument>({
+const UserSchema = new Schema<IUserDocument>({
     email: {
         type: String,
-        requred: true,
+        required: true,
         unique: true
     },
     passwordHash: {
@@ -23,7 +23,7 @@ const UserSchame = new Schema<IUserDocument>({
     }
 }, { versionKey: false })
 
-UserSchame.pre<IUserDocument>('save', async function(next) {
+UserSchema.pre<IUserDocument>('save', async function(next) {
     const user = this;
 
     if(!user.isModified('passwordHash')) return next();
@@ -47,7 +47,7 @@ UserSchame.pre<IUserDocument>('save', async function(next) {
     }
 });
 
-const User = model<IUserDocument>('User', UserSchame);
+const User = model<IUserDocument>('User', UserSchema);
 
 export default User;
 
