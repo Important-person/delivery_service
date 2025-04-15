@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import userRouter from './routes/userRoutes.js';
 import session from 'express-session';
 import passport from 'passport';
+import announcementRouter from './routes/announcementRouter.js';
 
 const app = express();
 app.use(express.json());
@@ -16,6 +17,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/api', userRouter);
+app.use('/api', announcementRouter);
 
 async function startServer(URLDB: string, PORT: string): Promise<void> {
     try {

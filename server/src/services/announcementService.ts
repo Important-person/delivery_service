@@ -1,12 +1,13 @@
 import "reflect-metadata";
 import { IAnnouncement, IAnnouncementDocument } from "../types/announcements.js";
 import Announcement from "../models/announcement.js";
-import { injectable, inject } from "inversify";
+import { injectable } from "inversify";
 
 export interface IAnnouncementService {
     find(params: Omit<IAnnouncement, 'images' | 'isDeleted'>): Promise<IAnnouncementDocument[] | null>;
     create(data: IAnnouncement): Promise<IAnnouncementDocument | null>;
-    remove(id: string): Promise<IAnnouncementDocument | null>
+    remove(id: string): Promise<IAnnouncementDocument | null>;
+    findId(id: string): Promise<IAnnouncementDocument | null>;
 }
 
 @injectable()
@@ -18,6 +19,7 @@ export class AnnouncementService implements IAnnouncementService {
                 ...(params.description && { description: { $regex: params.description, $options: "i" } }),
                 ...(params.userId && { userId: params.userId }),
                 ...(params.tags && params.tags.length && { tags: { $all: params.tags } }),
+                isDeleted: false,
             });
 
             if(!announcement.length) {
@@ -62,6 +64,22 @@ export class AnnouncementService implements IAnnouncementService {
         } catch(err) {
             console.error(`Error AnnouncementService.remove `, err);
             throw new Error(`Error in remove a announcement with id ${id}}`)
+        }
+    }
+
+    async findId(id: string): Promise<IAnnouncementDocument | null> {
+        try {
+            const announcement = await Announcement.findOne({ _id: id });
+
+            if(!announcement) {
+                console.log(`Announcement with  params: ${id} not found`);
+                return null;
+            }
+            
+            return announcement
+        } catch(err) {
+            console.error(`Error AnnouncementService.findId `, err);
+            throw new Error(`Error in find a announcement with id ${id}}`)
         }
     }
 }
