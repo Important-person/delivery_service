@@ -7,5 +7,5 @@ const userRouter = Router();
 const userContainer = container.get<UserController>(TYPES.UserController);
 
 userRouter.post('/signup', userContainer.create.bind(userContainer));
-userRouter.post('/signin', userContainer.findByEmail.bind(userContainer));
+userRouter.post('/signin', userContainer.login.bind(userContainer));
 export default userRouter;

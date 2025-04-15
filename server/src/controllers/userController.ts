@@ -5,6 +5,7 @@ import TYPES from "../types/types.js";
 import { inject, injectable } from "inversify";
 import { IUser } from "../types/user.js";
 import passport from "passport";
+import { IVerifyOptions } from "passport-local";
 
 @injectable()
 export class UserController {
@@ -24,10 +25,10 @@ export class UserController {
             if(!user) {
                 res.status(404).json({ message: "User not found" });
             } else {
-                res.status(200).json(user);
+                res.status(201).json(user);
             }
         } catch(err) {
-            console.error(`Error UserController.findByEmail for email ${err}`);
+            console.error(`Error UserController.findByEmail for email `, err);
             res.status(500).json({ message: "Internal server error" })
         }
     }
@@ -43,6 +44,10 @@ export class UserController {
 
             const user = await this.userService.create(userData);
 
+            if(!user) {
+                res.status(400).json({ error: 'email занят', status: 'error'});
+            }
+
             res.status(200).json(user);
         } catch(err) {
             console.error(`Error UserController.create userData `, err);
@@ -51,14 +56,17 @@ export class UserController {
     }
 
     login(req: Request, res: Response, next: NextFunction): void {
-        passport.authenticate('local', (err: unknown, user: Express.User, info: unknown) => {
+        passport.authenticate('local', (err: any, user: Express.User, info: IVerifyOptions) => {
 
             if(err) return next(err);
 
-            if(!user) return res.status(404).json({ error: 'Неверный логин или пароль', status: 'error' });
+            if(!user) return res.status(401).json({ error: 'Неверный логин или пароль', status: 'error' });
 
             req.login(user, (err) => {
-                if(err) return next(err);
+                if(err) {
+                    console.error(`Error UserController.login `, err);
+                    return next(err);
+                };
                 return res.json({ data: user, status: 'ok' });
             })
         })(req, res, next);

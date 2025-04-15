@@ -1,3 +1,4 @@
+import './config/passport.config.js'
 import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/userRoutes.js';
