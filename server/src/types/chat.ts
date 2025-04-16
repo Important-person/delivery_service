@@ -8,3 +8,12 @@ export interface IChat {
 }
 
 export interface IChatDocument extends IChat, Document {}
+
+export type SubscribeChatData = {
+    chatId: Types.ObjectId;
+    message: IMessageDocument
+}
+
+export type SubscribeChat = (data: SubscribeChatData) => void
+
+export type UnSubscribeChat = () => void

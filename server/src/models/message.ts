@@ -19,7 +19,7 @@ const MessageSchema = new Schema<IMessageDocument>({
     readAt: {
         type: Schema.Types.Date
     }
-})
+}, { versionKey: false })
 
 const Message = model<IMessageDocument>('Message',MessageSchema);
 

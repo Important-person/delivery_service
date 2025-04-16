@@ -8,3 +8,9 @@ export interface IMessage {
 }
 
 export interface IMessageDocument extends IMessage, Document {}
+
+export interface ISendMessage {
+    author: Types.ObjectId;
+    receiver: Types.ObjectId;
+    text: string
+}

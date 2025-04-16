@@ -15,7 +15,7 @@ const ChatSchema = new Schema<IChatDocument>({
         type: [Schema.Types.ObjectId],
         ref: 'Message'
     }
-})
+}, { versionKey: false })
 
 const Chat = model<IChatDocument>('Chat', ChatSchema);
 
