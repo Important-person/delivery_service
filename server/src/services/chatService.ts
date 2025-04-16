@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 import { EventEmitter } from "events";
 
 export interface IChatService { 
-    find(users: [Types.ObjectId]): Promise<IChatDocument | null>;
+    find(users: Types.ObjectId[]): Promise<IChatDocument | null>;
     sendMessage(data: ISendMessage): Promise<IMessageDocument>;
     subscribe(callBack: SubscribeChat): UnSubscribeChat;
     getHistory(id: string): Promise<IMessage[] | null>
@@ -24,9 +24,9 @@ export class ChatService implements IChatService {
         console.log('Chat initilaised');
     }
 
-    async find(users: [Types.ObjectId]): Promise<IChatDocument | null> {
+    async find(users: Types.ObjectId[]): Promise<IChatDocument | null> {
         try {
-            const chat = await Chat.findOne({ users: { $all: users } });
+            const chat = (await Chat.findOne({ users: { $all: users } })).populated('messages');
 
             if(!chat) {
                 console.log(`Chat with users ${users} not found`);

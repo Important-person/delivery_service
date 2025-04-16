@@ -5,17 +5,33 @@ import userRouter from './routes/userRoutes.js';
 import session from 'express-session';
 import passport from 'passport';
 import announcementRouter from './routes/announcementRouter.js';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import container from './config/container.config.js';
+import { IChatService } from './services/chatService.js';
+import TYPES from './types/types.js';
+import configerSocketIO from './config/socketio.config.js';
+import { IUserService } from './services/userService.js';
 
 const app = express();
-app.use(express.json());
-app.use(session({
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+const sessionMiddleware = session({
     secret: 'Bus on road',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false }
-}));
+});
+app.use(express.json());
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+
+const chatServiceInstance = container.get<IChatService>(TYPES.ChatService);
+const userServiceInstance = container.get<IUserService>(TYPES.UserService);
+
+configerSocketIO(io, chatServiceInstance, userServiceInstance, sessionMiddleware);
+
 app.use('/api', userRouter);
 app.use('/api', announcementRouter);
 
@@ -23,7 +39,7 @@ async function startServer(URLDB: string, PORT: string): Promise<void> {
     try {
         await mongoose.connect(URLDB);
 
-        app.listen(PORT, () => {
+        httpServer.listen(PORT, () => {
             console.log(`Сервер запущен на ${PORT} порту`);
         })
     } catch (err) {
