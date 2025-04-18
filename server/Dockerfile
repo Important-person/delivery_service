@@ -1,15 +1,27 @@
-FROM node:20.11.1
+FROM node:20.11.1 as builder
 
 WORKDIR /app
 
-ARG NODE_ENV=development
-
-COPY package*.json /.
-
-COPY tsconfig.json /.
+COPY package*.json ./
 
 RUN npm install
 
+COPY tsconfig.json ./
+
 COPY . .
 
-CMD [ "npm", "run", "dev" ]
+RUN npm run build
+
+
+FROM node:20.11.1 as runner
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm ci --only=production
+
+COPY --from=builder /app/dist ./dist
+
+CMD [ "npm", "run", "start" ]
+ENV NODE_ENV=production

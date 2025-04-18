@@ -15,13 +15,12 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
 
     io.on('connection', async (socket) => {
         const req = socket.request as any;
-        const userEmail = req.session.passport.user;
-
-        if(!userEmail) {
+        if(!req.session || !req.session.passport || !req.session.passport.user) {
             console.error(`Пользователь не авторизован`);
             socket.disconnect();
             return
         }
+        const userEmail = req.session.passport.user;
 
         const currentUserId = await user.findByEmail(userEmail);
 
@@ -36,7 +35,7 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
 
                 socket.join(currentChat._id.toString());
 
-                socket.emit('chatHistory', currentChat.messages);
+                io.to(currentChat._id.toString()).emit('chatHistory', currentChat.messages);
             } catch(err) {
                 console.error('Error join room', err);
             }
@@ -51,6 +50,8 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
                 })
 
                 const currentChat = await chat.find([currentUserId._id as Types.ObjectId, new Types.ObjectId(data.receiver)]);
+
+                socket.join(currentChat._id.toString());
 
                 io.to(currentChat._id.toString()).emit('newMessage', {
                     chatId: currentChat._id,

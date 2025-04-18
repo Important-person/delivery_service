@@ -6,7 +6,6 @@ const MessageSchema = new Schema<IMessageDocument>({
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true,
     },
     sendAt: {
         type: Schema.Types.Date,

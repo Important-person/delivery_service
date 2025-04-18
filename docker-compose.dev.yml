@@ -1,0 +1,9 @@
+services:
+  server:
+    command: npm run dev
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /app/dist
+    environment:
+      - NODE_ENV=development

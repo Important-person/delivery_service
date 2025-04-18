@@ -26,12 +26,14 @@ export class ChatService implements IChatService {
 
     async find(users: Types.ObjectId[]): Promise<IChatDocument | null> {
         try {
-            const chat = (await Chat.findOne({ users: { $all: users } })).populated('messages');
+            const chat = await Chat.findOne({ users: { $all: users } });
 
             if(!chat) {
                 console.log(`Chat with users ${users} not found`);
                 return null;
             }
+
+            await chat.populate('messages');
 
             return chat
         } catch(err) {
@@ -41,9 +43,6 @@ export class ChatService implements IChatService {
     }
 
     async sendMessage(data: ISendMessage): Promise<IMessageDocument> {
-        const session = await Message.startSession();
-        session.startTransaction();
-
         try {
             const newMessage = new Message({
                 author: data.author,
@@ -51,43 +50,53 @@ export class ChatService implements IChatService {
                 sendAt: Date.now()
             })
 
-            await newMessage.save({ session });
+            await newMessage.save();
             console.log(`Message ${newMessage._id} created`);
 
-            const newChatMessage = await Chat.findOneAndUpdate(
-                { users: { $all: [data.author, data.receiver] } },
-                { $push: { messages: newMessage._id},
-                  $setOnInsert: {
-                    users: [data.author, data.receiver],
-                    createdAt: Date.now()
-                  }
-                },
-                { new : true, upsert: true, session}
-            )
+            let chat: IChatDocument | null = null;
 
-            if(!newChatMessage) {
-                throw new Error(`Chat with users ${[data.author, data.receiver]} not found and not create`);
+            chat = await Chat.findOne({ users: { $all: [data.author, data.receiver] } });
+
+            if(!chat) {
+                console.log(`Chat with users ${[data.author, data.receiver]} not found`);
+
+                chat = new Chat({
+                    users: [data.author, data.receiver],
+                    createdAt: Date.now(),
+                    messages: [newMessage._id]
+                })
+
+                await chat.save();
+                console.log(`New chat with id ${chat._id} created`);
+            } else {
+                const updatedChat = await Chat.findOneAndUpdate(
+                    chat._id,
+                    { $push: { messages: newMessage._id } },
+                    { new: true }
+                )
+
+                chat = updatedChat;
+                console.log(`Chat ${chat._id} updated`);
             }
-            console.log(`Chat ${newChatMessage._id} updated with message ${newMessage._id}`);
+
+            if (!chat) {
+                throw new Error(`Can not find or create chat with users ${[data.author, data.receiver]}`);
+            }
 
             const eventData: SubscribeChatData = {
-                chatId: newChatMessage._id as Types.ObjectId,
+                chatId: chat._id as Types.ObjectId,
                 message: newMessage
             }
 
             this.emmiter.emit("NewMessage", eventData);
             console.log(`Created event with name - New message with message id ${newMessage._id}`);
 
-            await session.commitTransaction();
             console.log('Session committed');
 
             return newMessage
         } catch(err) {
-            await session.abortTransaction();
             console.error(`Error ChatService.sendMessage `, err);
             throw new Error(`Error send message in chat with users ${[data.author, data.receiver]}`);
-        } finally {
-            await session.endSession()
         }
     }
 

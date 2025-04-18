@@ -1,4 +1,7 @@
-import './config/passport.config.js'
+import './config/passport.config.js';
+import dotenv from 'dotenv';
+import path, { dirname } from 'path';
+import { fileURLToPath } from "url";
 import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/userRoutes.js';
@@ -12,12 +15,17 @@ import { IChatService } from './services/chatService.js';
 import TYPES from './types/types.js';
 import configerSocketIO from './config/socketio.config.js';
 import { IUserService } from './services/userService.js';
+import cors from 'cors';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 const sessionMiddleware = session({
-    secret: 'Bus on road',
+    secret: process.env.SESSION_SECRET || 'Bus on road',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false }
@@ -26,6 +34,7 @@ app.use(express.json());
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(cors());
 
 const chatServiceInstance = container.get<IChatService>(TYPES.ChatService);
 const userServiceInstance = container.get<IUserService>(TYPES.UserService);
@@ -48,7 +57,7 @@ async function startServer(URLDB: string, PORT: string): Promise<void> {
 }
 
 const PORT: string = process.env.PORT || '3000';
-const URLDB: string = process.env.URLDB || 'mongodb://root:example@mongo:27017/';
+const URLDB: string = process.env.MONGO_URL || 'mongodb://root:example@mongo:27017/mydatabase?authSource=admin';
 
 startServer(URLDB, PORT);
 
