@@ -1,9 +1,13 @@
 services:
   server:
-    command: npm run dev
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: dev_runner
     volumes:
       - ./server:/app
-      - /app/node_modules
-      - /app/dist
     environment:
       - NODE_ENV=development
+    command: npm run dev
+    depends_on:
+      - mongo

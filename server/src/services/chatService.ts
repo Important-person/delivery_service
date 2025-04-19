@@ -91,8 +91,6 @@ export class ChatService implements IChatService {
             this.emmiter.emit("NewMessage", eventData);
             console.log(`Created event with name - New message with message id ${newMessage._id}`);
 
-            console.log('Session committed');
-
             return newMessage
         } catch(err) {
             console.error(`Error ChatService.sendMessage `, err);

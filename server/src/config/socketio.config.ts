@@ -24,6 +24,20 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
 
         const currentUserId = await user.findByEmail(userEmail);
 
+        const unSubscribe = chat.subscribe((data) => {
+            console.log(`Get new message on chat ${data.chatId}`);
+
+            io.to(data.chatId.toString()).emit('newMessage', {
+                chatId: data.chatId,
+                message: data.message
+            })
+        });
+
+        socket.on('disconnect', () => {
+            console.log('User disconnect');
+            unSubscribe();
+        });
+
         socket.on('getHistory', async (userId: string) => {
             try {
                 const currentChat = await chat.find([currentUserId._id as Types.ObjectId, new Types.ObjectId(userId)]);
@@ -35,7 +49,7 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
 
                 socket.join(currentChat._id.toString());
 
-                io.to(currentChat._id.toString()).emit('chatHistory', currentChat.messages);
+                socket.emit('chatHistory', currentChat.messages);
             } catch(err) {
                 console.error('Error join room', err);
             }
@@ -49,14 +63,6 @@ function configerSocketIO(io: Server, chat: IChatService, user: IUserService, se
                     text: data.text
                 })
 
-                const currentChat = await chat.find([currentUserId._id as Types.ObjectId, new Types.ObjectId(data.receiver)]);
-
-                socket.join(currentChat._id.toString());
-
-                io.to(currentChat._id.toString()).emit('newMessage', {
-                    chatId: currentChat._id,
-                    message
-                })
             } catch(err) {
                 console.error(`Error sending message to user with id ${data.receiver}`, err);
             }
